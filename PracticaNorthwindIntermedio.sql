@@ -95,7 +95,7 @@ on od.ProductID=p.ProductID
 order by o.OrderID,od.ProductID;
 
 --30
---There are some customers who have never actually placed an order. Show these customers.select * from Customerswhere CustomerID not in (select CustomerID from Orders);select c.CustomerID as Customers_CustomerID, o.CustomerID as Orders_CustomerID from Customers as c left  join Orders as oon c.CustomerID=o.CustomerIDwhere o.CustomerID is null;
+--There are some customers who have never actually placed an order. Show these customers.select * from Customers where CustomerID not in (select CustomerID from Orders);select c.CustomerID as Customers_CustomerID, o.CustomerID as Orders_CustomerID  from Customers as c left  join Orders as oon c.CustomerID=o.CustomerIDwhere o.CustomerID is null;
 
 --31
 --One employee (Margaret Peacock, EmployeeID 4) has placed the most orders. However, there are some
