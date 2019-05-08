@@ -70,4 +70,100 @@ group by o.OrderID
 order by LineItems desc;
 
 
+--37
+--The Northwind mobile app developers would now like to just get a random assortment of orders for beta
+--testing on their app. Show a random set of 2% of all orders.
+select top (select CAST((ROUND(count(o.OrderID)*(0.02), 0, 0)) AS INT)
+ from Orders as o) OrderID
+from Orders
+order by rand();
+
+
+--38
+--Janet Leverling, one of the salespeople, has come to you with a request. She thinks that she accidentally
+--double-entered a line item on an order, with a different ProductID, but the same quantity. She remembers
+--that the quantity was 60 or more. Show all the OrderIDs with line items that match this, in order of
+--OrderID.select od.OrderIDfrom [Order Details] as odwhere od.Quantity>=60
+group by od.OrderID,od.Quantityorder by od.OrderIDselect od.OrderID,od.Quantityfrom [Order Details] as od inner join (select * from [Order Details] as od1 where od1.Quantity>=60 )as od1on (od.OrderID=od1.OrderID
+and  od.Quantity=od1.Quantity
+and not od.ProductID=od1.ProductID
+)
+group by od.OrderID,od.Quantity;--EL RESULTADO ESPERA TENER 5 COLUMNAS DONDE SE REPITE EL 10263 AUNQUE NO TENDRIA SENTIDO--PORQUE PARA ESA ORDEN SOLO SE REPITE UNA VEZ LA CANTIDAD select od.OrderID,od.ProductID,od.Quantityfrom [Order Details] as odwhere od.OrderID=10263;--39--Based on the previous question, we now want to show details of the order, for orders that match the above
+--criteria. select o.OrderID,od.ProductID,od.UnitPrice,od.Quantity,od.Discountfrom Orders as o,[Order Details] as odwhere o.OrderID in (select od.OrderIDfrom [Order Details] as od inner join (select * from [Order Details] as od1 where od1.Quantity>=60 )as od1on (od.OrderID=od1.OrderID
+and  od.Quantity=od1.Quantity
+and not od.ProductID=od1.ProductID
+)
+group by od.OrderID,od.Quantity)AND o.OrderID=od.OrderID;--otra opcionwith OrdersRepeat(OrderID)as (select od.OrderIDfrom [Order Details] as od inner join (select * from [Order Details] as od1 where od1.Quantity>=60 )as od1on (od.OrderID=od1.OrderID
+and  od.Quantity=od1.Quantity
+and not od.ProductID=od1.ProductID
+)
+group by od.OrderID,od.Quantity)select o.OrderID,od.ProductID,od.UnitPrice,od.Quantity,od.Discountfrom Orders as o,[Order Details] as odwhere o.OrderID in (select * from OrdersRepeat)and o.OrderID=od.OrderID;
+--40--Here's another way of getting the same results as in the previous problem, using a derived table instead of
+--a CTE. However, there's a bug in this SQL. It returns 20 rows instead of 16. Correct the SQL.
+--Problem SQL:
+select od.OrderID,od.ProductID,od.UnitPrice,od.Quantity,od.Discount
+from [Order Details] as od inner join 
+(Select OrderID
+ From [Order Details]
+ Where Quantity >= 60
+ Group By OrderID, Quantity
+ Having Count(*) > 1
+ ) PotentialProblemOrders
+ on PotentialProblemOrders.OrderID = od.OrderID
+Order by OrderID, od.ProductID-- -----------------------------------------------------------------41--Some customers are complaining about their orders arriving late. Which orders are late?select o.OrderID,o.OrderDate,o.RequiredDate,o.ShippedDatefrom Orders as owhere o.RequiredDate<o.ShippedDateselect e.EmployeeID,o.OrderID,o.OrderDate,o.RequiredDate,o.ShippedDatefrom Orders as o inner join Employees as eon o.EmployeeID= e.EmployeeIDwhere o.RequiredDate<o.ShippedDateorder by e.EmployeeID;--42--Some salespeople have more orders arriving late than others. Maybe they're not following up on the order
+--process, and need more training. Which salespeople have the most orders arriving late?
+with LateOrders(OrderID)
+as (select o.OrderIDfrom Orders as owhere o.RequiredDate<o.ShippedDate)select e.EmployeeID,e.LastName,count(o.OrderID) as TotalOrdersLate
+from Orders as o inner join Employees as e
+on o.EmployeeID=e.EmployeeID
+inner join LateOrders as lo
+on o.OrderID=lo.OrderID
+group by e.EmployeeID,e.LastName
+order by TotalOrdersLate desc;
+
+
+
+--43
+--Andrew, the VP of sales, has been doing some more thinking some more about the problem of late orders.
+--He realizes that just looking at the number of orders arriving late for each salesperson isn't a good idea. It
+--needs to be compared against the total number of orders per salesperson. Return results like the following:
+--EmployeeID LastName AllOrders LateOrders
+
+
+
+
+
+with LateOrders(OrderID)
+as (select o.OrderIDfrom Orders as owhere o.RequiredDate<o.ShippedDate)select e.EmployeeID,e.LastName,toO.totalOrders as AllOrders,count(o.OrderID) as LateOrders
+from Orders as o inner join Employees as e
+on o.EmployeeID=e.EmployeeID
+inner join LateOrders as lo
+on o.OrderID=lo.OrderID
+inner join (select e.EmployeeID,count(o.OrderID) as totalOrders
+from Orders as o inner join Employees as e
+on o.EmployeeID=e.EmployeeID 
+group by e.EmployeeID) as toO
+on e.EmployeeID=toO.EmployeeID 
+group by e.EmployeeID,e.LastName,toO.totalOrders
+order by e.EmployeeID;
+
+--extra
+select e.EmployeeID,count(o.OrderID)
+from Orders as o inner join Employees as e
+on o.EmployeeID=e.EmployeeID 
+group by e.EmployeeID;
+
+--extra
+select e.EmployeeID,count(o.OrderID) LateOrdersfrom Orders as o inner join Employees as eon o.EmployeeID= e.EmployeeIDwhere o.RequiredDate<o.ShippedDategroup by (e.EmployeeID);
+--44
+--There's an employee missing in the answer from the problem above. Fix the SQL to show all employees
+--who have taken orders.
+
+select e.EmployeeID,e.LastName,count(o.OrderID) as TotalOrders,OrdersLate.LateOrders
+from Orders as o inner join Employees as e
+on o.EmployeeID=e.EmployeeID 
+ left join (select e.EmployeeID,count(o.OrderID) LateOrdersfrom Orders as o inner join Employees as eon o.EmployeeID= e.EmployeeIDwhere o.RequiredDate<o.ShippedDategroup by (e.EmployeeID)) as OrdersLate
+on e.EmployeeID=OrdersLate.EmployeeID
+group by e.EmployeeID,e.LastName,OrdersLate.LateOrders
+order by e.EmployeeID;
 
