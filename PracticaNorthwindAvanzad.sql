@@ -335,3 +335,6 @@ group by o.CustomerID,c.CompanyName) as i
 group by i.CustomerID,i.CompanyName,i.TotalOrderAmount
 order by CustomerGroup;
 
+--50
+--Based on the above query, show all the defined CustomerGroups, and the percentage in each. Sort by the
+--total in each group, in descending order.
