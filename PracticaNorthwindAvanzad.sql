@@ -337,4 +337,25 @@ order by CustomerGroup;
 
 --50
 --Based on the above query, show all the defined CustomerGroups, and the percentage in each. Sort by the
---total in each group, in descending order.
+--total in each group, in descending order.with TotalOrderAmount(TotalOrderAmount)
+as
+(select sum(od.Quantity*od.UnitPrice) as TotalOrderAmount
+from [Order Details] as od inner join (select o.CustomerID,o.OrderID from orders as o where year(o.OrderDate)=1998) as o
+on od.OrderID=o.OrderID
+group by o.CustomerID), Categorize as (
+select 
+	CustomerGroup=
+	case
+		when i.TotalOrderAmount >= 0 and  i.TotalOrderAmount <= 1000 then 'Low'
+		when i.TotalOrderAmount > 1000 and i.TotalOrderAmount<= 5000 then 'Medium'
+		when i.TotalOrderAmount > 5000 and i.TotalOrderAmount<=10000 then 'High'
+		when i.TotalOrderAmount > 10000 then 'Very High'
+	end
+from TotalOrderAmount as i)
+select CustomerGroup,TotalInGroup=count(*), count(*)*1.0/(select count(*) from Categorize)
+from Categorize
+group by CustomerGroup
+
+
+
+ 
