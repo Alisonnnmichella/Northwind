@@ -337,9 +337,8 @@ order by CustomerGroup;
 
 --50
 --Based on the above query, show all the defined CustomerGroups, and the percentage in each. Sort by the
---total in each group, in descending order.with TotalOrderAmount(TotalOrderAmount)
-as
-(select sum(od.Quantity*od.UnitPrice) as TotalOrderAmount
+--total in each group, in descending order.--with TotalOrderAmount(TotalOrderAmount)
+as (select sum(od.Quantity*od.UnitPrice) as TotalOrderAmount
 from [Order Details] as od inner join (select o.CustomerID,o.OrderID from orders as o where year(o.OrderDate)=1998) as o
 on od.OrderID=o.OrderID
 group by o.CustomerID), Categorize as (
